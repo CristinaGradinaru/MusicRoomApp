@@ -25,19 +25,22 @@ export default class Room extends Component {
     this.getRoomDetails();
   }
 
-  componentDidMount(){
-    this.interval = setInterval(this.getCurrentSong, 1000)
+  componentDidMount() {
+    this.interval = setInterval(this.getCurrentSong, 1000);
   }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     clearInterval(this.interval);
   }
 
+
+  
   authenticatedSpotify() {
     fetch("/spotify/is-authenticated/")
       .then((response) => response.json())
       .then((data) => {
         this.setState({ spotifyAuthenticated: data.status });
+        console.log(data.status);
         if (!data.status) {
           fetch("/spotify/get-auth-url/")
             .then((response) => response.json())
@@ -47,7 +50,6 @@ export default class Room extends Component {
         }
       });
   }
-
   getRoomDetails() {
     return fetch("/api/get-room/" + "?code=" + this.roomCode)
       .then((response) => {
@@ -86,6 +88,24 @@ export default class Room extends Component {
     });
   }
 
+
+  getCurrentSong() {
+    fetch("/spotify/current-song/")
+      .then((response) => {
+        if (!response.ok) {
+          return {};
+        } else {
+          return response.json();
+        }
+      })
+      .then((data) => {
+        this.setState({ song: data });
+        console.log(data);
+      });
+  }
+
+
+
   renderSettings() {
     return (
       <Grid container spacing={1}>
@@ -98,8 +118,6 @@ export default class Room extends Component {
             updateCallback={this.getRoomDetails}
           />
         </Grid>
-        <MusicPlayer {...this.props.song}/>
-        {this.state.isHost ? this.renderSettingsButton() : null}
         <Grid item xs={12} align="center">
           <Button
             variant="contained"
@@ -127,22 +145,6 @@ export default class Room extends Component {
     );
   }
 
-  getCurrentSong() {
-    fetch("/spotify/current-song/")
-      .then((response) => {
-        if (!response.ok) {
-          return {};
-        } else {
-          return response.json();
-        }
-      })
-      .then((data) => {
-        this.setState({ song: data });
-        console.log(data);
-      });
-  }
-
-
   render() {
     if (this.state.showSettings) {
       return this.renderSettings();
@@ -154,6 +156,7 @@ export default class Room extends Component {
             Code: {this.roomCode}
           </Typography>
         </Grid>
+        <MusicPlayer {...this.state.song} />
         {this.state.isHost ? this.renderSettingsButton() : null}
         <Grid item xs={12} align="center">
           <Button
